@@ -68,10 +68,22 @@ export async function toggleLike(emojiId: string, userId: string) {
       throw deleteLikeError;
     }
 
+    // Get current likes count
+    const { data: currentEmoji, error: fetchError } = await supabase
+      .from('emojis')
+      .select('likes_count')
+      .eq('id', emojiId)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching current likes count:', fetchError);
+      throw fetchError;
+    }
+
     // Decrement the likes count
     const { error: updateError } = await supabase
       .from('emojis')
-      .update({ likes_count: supabase.raw('likes_count - 1') })
+      .update({ likes_count: (currentEmoji?.likes_count || 1) - 1 })
       .eq('id', emojiId);
 
     if (updateError) {
@@ -92,10 +104,22 @@ export async function toggleLike(emojiId: string, userId: string) {
     throw addLikeError;
   }
 
+  // Get current likes count
+  const { data: currentEmoji, error: fetchError } = await supabase
+    .from('emojis')
+    .select('likes_count')
+    .eq('id', emojiId)
+    .single();
+
+  if (fetchError) {
+    console.error('Error fetching current likes count:', fetchError);
+    throw fetchError;
+  }
+
   // Increment the likes count
   const { error: updateError } = await supabase
     .from('emojis')
-    .update({ likes_count: supabase.raw('likes_count + 1') })
+    .update({ likes_count: (currentEmoji?.likes_count || 0) + 1 })
     .eq('id', emojiId);
 
   if (updateError) {
