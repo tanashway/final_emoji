@@ -24,7 +24,7 @@ export async function createEmoji(data: {
 export async function getEmojis() {
   const { data, error } = await supabase
     .from('emojis')
-    .select('*, url as image_url')
+    .select('*')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -32,7 +32,13 @@ export async function getEmojis() {
     throw error;
   }
 
-  return data as Emoji[];
+  return data?.map(emoji => ({
+    id: emoji.id,
+    url: emoji.url,
+    prompt: emoji.prompt,
+    likes: emoji.likes_count || 0,
+    createdAt: emoji.created_at
+  })) as Emoji[];
 }
 
 export async function toggleLike(emojiId: string, userId: string) {
