@@ -7,13 +7,17 @@ import { LoadingAnimation } from "@/components/loading-animation";
 import { useEmojiStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { SignUpButton } from "@clerk/nextjs";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 export default function Home() {
   const { isSignedIn, isLoaded, user } = useUser();
   const { emojis, isLoading, setIsLoading, addEmojis, toggleLike, isLiked } = useEmojiStore();
 
-  // Filter emojis to only show the current user's emojis
-  const userEmojis = emojis.filter(emoji => emoji.userId === user?.id);
+  // Filter emojis to only show the current user's emojis when signed in
+  const filteredEmojis = isSignedIn 
+    ? emojis.filter(emoji => emoji.userId === user?.id)
+    : emojis;
 
   if (!isLoaded) {
     return <LoadingAnimation />;
@@ -35,6 +39,21 @@ export default function Home() {
               Get Started
             </Button>
           </SignUpButton>
+
+          {isLoading ? (
+            <LoadingAnimation />
+          ) : emojis.length > 0 ? (
+            <div className="w-full max-w-4xl">
+              <h2 className="text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-200">
+                Latest Community Creations
+              </h2>
+              <EmojiGrid
+                emojis={emojis}
+                onLike={toggleLike}
+                isLiked={isLiked}
+              />
+            </div>
+          ) : null}
         </main>
       </div>
     );
@@ -71,6 +90,7 @@ export default function Home() {
                 addEmojis(data.images, prompt, user?.id || '');
               } catch (error) {
                 console.error('Error generating emoji:', error);
+                toast.error(error instanceof Error ? error.message : 'Failed to generate emoji');
               } finally {
                 setIsLoading(false);
               }
@@ -84,9 +104,9 @@ export default function Home() {
 
         {isLoading ? (
           <LoadingAnimation />
-        ) : userEmojis.length > 0 ? (
+        ) : filteredEmojis.length > 0 ? (
           <EmojiGrid
-            emojis={userEmojis}
+            emojis={filteredEmojis}
             onLike={toggleLike}
             isLiked={isLiked}
           />

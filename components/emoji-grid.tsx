@@ -8,7 +8,6 @@ import type { Emoji } from "@/lib/types";
 interface EmojiGridProps {
   emojis: Emoji[];
   onLike?: (id: string) => void;
-  onDownload?: (url: string) => void;
   isLiked: (id: string) => boolean;
 }
 
@@ -22,42 +21,64 @@ const isValidUrl = (url: unknown): url is string => {
   }
 };
 
-export function EmojiGrid({ emojis, onLike, onDownload, isLiked }: EmojiGridProps) {
+const downloadImage = async (url: string, prompt: string) => {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = `emoji-${prompt.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    console.error('Error downloading image:', error);
+  }
+};
+
+export function EmojiGrid({ emojis, onLike, isLiked }: EmojiGridProps) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full max-w-4xl">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 w-full max-w-4xl">
       {emojis.filter(emoji => isValidUrl(emoji.url)).map((emoji) => (
-        <div key={emoji.id} className="relative group aspect-square">
-          <Image
-            src={emoji.url}
-            alt={`Generated emoji from prompt: ${emoji.prompt}`}
-            fill
-            className="object-cover rounded-lg"
-            unoptimized
-          />
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8 bg-white/20 hover:bg-white/40"
-              onClick={() => onLike?.(emoji.id)}
-            >
-              <Heart 
-                className={`h-4 w-4 transition-colors ${isLiked(emoji.id) ? 'text-red-500 fill-red-500' : 'text-white'}`} 
-              />
-              {emoji.likes > 0 && (
-                <span className="absolute -top-2 -right-2 text-xs bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
-                  {emoji.likes}
-                </span>
-              )}
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8 bg-white/20 hover:bg-white/40"
-              onClick={() => onDownload?.(emoji.url)}
-            >
-              <Download className="h-4 w-4 text-white" />
-            </Button>
+        <div key={emoji.id} className="relative group bg-white dark:bg-gray-800 rounded-lg p-2">
+          <div className="relative aspect-square">
+            <Image
+              src={emoji.url}
+              alt={`Generated emoji from prompt: ${emoji.prompt}`}
+              fill
+              className="object-contain rounded-lg"
+              unoptimized
+            />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 bg-white/20 hover:bg-white/40"
+                onClick={() => onLike?.(emoji.id)}
+              >
+                <Heart 
+                  className={`h-4 w-4 transition-colors ${isLiked(emoji.id) ? 'text-red-500 fill-red-500' : 'text-white'}`} 
+                />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 bg-white/20 hover:bg-white/40"
+                onClick={() => downloadImage(emoji.url, emoji.prompt)}
+              >
+                <Download className="h-4 w-4 text-white" />
+              </Button>
+            </div>
+          </div>
+          <div className="mt-2 flex justify-between items-center text-sm">
+            <span className="text-gray-600 dark:text-gray-300 truncate" title={emoji.prompt}>
+              {emoji.prompt}
+            </span>
+            <span className="text-gray-500 dark:text-gray-400 flex items-center gap-1">
+              <Heart className="h-3 w-3" /> {emoji.likes}
+            </span>
           </div>
         </div>
       ))}
