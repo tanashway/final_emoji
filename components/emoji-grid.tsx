@@ -1,9 +1,10 @@
 'use client';
 
-import { Download, Heart } from "lucide-react";
+import { Download, Heart, Sticker } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import type { Emoji } from "@/lib/types";
+import { toast } from "sonner";
 
 interface EmojiGridProps {
   emojis: Emoji[];
@@ -35,6 +36,37 @@ const downloadImage = async (url: string, prompt: string) => {
     window.URL.revokeObjectURL(blobUrl);
   } catch (error) {
     console.error('Error downloading image:', error);
+    toast.error('Failed to download image');
+  }
+};
+
+const downloadSticker = async (url: string, prompt: string) => {
+  try {
+    const response = await fetch('/api/sticker', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ imageUrl: url }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to convert image to sticker');
+    }
+
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = `sticker-${prompt.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.webp`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+    toast.success('Sticker downloaded successfully');
+  } catch (error) {
+    console.error('Error downloading sticker:', error);
+    toast.error('Failed to download sticker');
   }
 };
 
@@ -67,8 +99,18 @@ export function EmojiGrid({ emojis, onLike, isLiked }: EmojiGridProps) {
                 variant="ghost"
                 className="h-8 w-8 bg-white/20 hover:bg-white/40"
                 onClick={() => downloadImage(emoji.url, emoji.prompt)}
+                title="Download as PNG"
               >
                 <Download className="h-4 w-4 text-white" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 bg-white/20 hover:bg-white/40"
+                onClick={() => downloadSticker(emoji.url, emoji.prompt)}
+                title="Download as WhatsApp Sticker"
+              >
+                <Sticker className="h-4 w-4 text-white" />
               </Button>
             </div>
           </div>

@@ -7,12 +7,13 @@ import { LoadingAnimation } from "@/components/loading-animation";
 import { useEmojiStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { SignUpButton } from "@clerk/nextjs";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function Home() {
   const { isSignedIn, isLoaded, user } = useUser();
   const { emojis, isLoading, setIsLoading, addEmojis, toggleLike, isLiked } = useEmojiStore();
+  const [useLocalGeneration, setUseLocalGeneration] = useState(false);
 
   // Filter emojis to only show the current user's emojis when signed in
   const filteredEmojis = isSignedIn 
@@ -67,11 +68,25 @@ export default function Home() {
         </h1>
         
         <div className="w-full max-w-xl">
+          <div className="mb-4 flex items-center justify-end">
+            <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={useLocalGeneration} 
+                onChange={(e) => setUseLocalGeneration(e.target.checked)}
+                className="rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              Use local generation
+            </label>
+          </div>
+          
           <EmojiGeneratorForm
             onGenerate={async (prompt: string) => {
               try {
                 setIsLoading(true);
-                const response = await fetch("/api/generate", {
+                const endpoint = useLocalGeneration ? "/api/generate-local" : "/api/generate";
+                
+                const response = await fetch(endpoint, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ prompt }),
