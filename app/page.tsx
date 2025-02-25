@@ -13,7 +13,8 @@ import { toast } from "sonner";
 export default function Home() {
   const { isSignedIn, isLoaded, user } = useUser();
   const { emojis, isLoading, setIsLoading, addEmojis, toggleLike, isLiked } = useEmojiStore();
-  const [useLocalGeneration, setUseLocalGeneration] = useState(false);
+  // Always use local generation
+  const useLocalGeneration = true;
 
   // Filter emojis to only show the current user's emojis when signed in
   const filteredEmojis = isSignedIn 
@@ -68,23 +69,12 @@ export default function Home() {
         </h1>
         
         <div className="w-full max-w-xl">
-          <div className="mb-4 flex items-center justify-end">
-            <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={useLocalGeneration} 
-                onChange={(e) => setUseLocalGeneration(e.target.checked)}
-                className="rounded border-gray-300 text-primary focus:ring-primary"
-              />
-              Use local generation
-            </label>
-          </div>
-          
           <EmojiGeneratorForm
             onGenerate={async (prompt: string) => {
               try {
                 setIsLoading(true);
-                const endpoint = useLocalGeneration ? "/api/generate-local" : "/api/generate";
+                // Always use local generation endpoint
+                const endpoint = "/api/generate-local";
                 
                 const response = await fetch(endpoint, {
                   method: "POST",
