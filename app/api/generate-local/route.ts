@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     console.log('Starting local emoji generation with prompt:', prompt);
     
     try {
-      // Call your local Stable Diffusion API
+      // Call the local Stable Diffusion API
       const response = await fetch('http://127.0.0.1:7860/sdapi/v1/txt2img', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,7 +44,10 @@ export async function POST(req: Request) {
       
       if (!response.ok) {
         console.error('Local API error:', response.status, await response.text());
-        throw new Error(`Local API returned ${response.status}`);
+        return NextResponse.json(
+          { error: "Error communicating with local Stable Diffusion. Please ensure it's running on port 7860." },
+          { status: 500 }
+        );
       }
       
       const data = await response.json();
@@ -111,7 +114,7 @@ export async function POST(req: Request) {
     } catch (error) {
       console.error('Error with local generation:', error);
       return NextResponse.json(
-        { error: "Error communicating with local image generation service. Please ensure Stable Diffusion WebUI is running." },
+        { error: "Error communicating with local Stable Diffusion. Please ensure it's running on port 7860." },
         { status: 500 }
       );
     }
